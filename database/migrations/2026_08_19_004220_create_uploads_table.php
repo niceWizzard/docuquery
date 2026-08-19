@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('file_url',256)->nullable(false);
             $table->string('mime_type',64)->nullable(false);
             $table->integer('file_size')->nullable(false)->default(0);
-            $table->enum('status',array_column(UploadStatus::cases(), 'value'))->default(UploadStatus::PENDING->value);
+            $table->enum('status',array_column(UploadStatus::cases(), 'value'))->nullable(false)->default(UploadStatus::PENDING->value);
         });
     }
 
