@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessUpload;
 use App\Models\Uploads;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -39,13 +40,14 @@ class UploadController extends Controller
             foreach ($request->file('files') as $file) {
                 $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('uploads', $filename, 's3');
-                Uploads::create([
+                $upload = Uploads::create([
                     'file_size' => $file->getSize(),
                     'mime_type' => $file->getMimeType(),
                     'file_name' => $file->getClientOriginalName(),
                     'uploader_id' => $request->user()->id,
                     'file_url' => $path,
                 ]);
+                ProcessUpload::dispatch($upload);
             }
         }
         return redirect(route('uploads.index'));
