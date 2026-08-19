@@ -8,9 +8,10 @@ import { ChangeEvent, DragEvent, FormEventHandler, useState } from 'react';
 interface Upload {
     id: number;
     file_name: string;
-    file_url?: string;
-    mime_type?: string;
-    file_size?: number;
+    file_url: string;
+    mime_type: string;
+    file_size: number;
+    status: string;
 }
 
 function formatBytes(bytes?: number, decimals = 2) {
@@ -185,16 +186,86 @@ export default function Index({
                                     </div>
 
                                     <div className="grid gap-2.5 sm:grid-cols-2">
-                                        {formData.files.map((file, index) => (
-                                            <div
-                                                key={`${file.name}-${index}`}
-                                                className="group flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-2.5 transition-all hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-900"
-                                            >
-                                                <div className="flex min-w-0 items-center space-x-3">
-                                                    {/* File Icon */}
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
+                                        {formData.files.map((file, index) => {
+                                            const isImage =
+                                                file.type.startsWith('image/');
+                                            const isPdf =
+                                                file.type === 'application/pdf';
+
+                                            return (
+                                                <div
+                                                    key={`${file.name}-${index}`}
+                                                    className="group flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-2.5 transition-all hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-900"
+                                                >
+                                                    <div className="flex min-w-0 items-center space-x-3">
+                                                        {/* Thumbnail / Icon */}
+                                                        {isImage ? (
+                                                            <img
+                                                                src={URL.createObjectURL(
+                                                                    file,
+                                                                )}
+                                                                alt={file.name}
+                                                                className="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-700"
+                                                                onLoad={(e) =>
+                                                                    URL.revokeObjectURL(
+                                                                        (
+                                                                            e.target as HTMLImageElement
+                                                                        ).src,
+                                                                    )
+                                                                }
+                                                            />
+                                                        ) : isPdf ? (
+                                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-xs font-bold text-red-600 dark:bg-red-950/60 dark:text-red-400">
+                                                                PDF
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
+                                                                <svg
+                                                                    className="h-5 w-5"
+                                                                    fill="none"
+                                                                    viewBox="0 0 24 24"
+                                                                    stroke="currentColor"
+                                                                >
+                                                                    <path
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth={
+                                                                            2
+                                                                        }
+                                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                                    />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="min-w-0">
+                                                            <p
+                                                                className="truncate text-sm font-medium text-gray-800 dark:text-gray-200"
+                                                                title={
+                                                                    file.name
+                                                                }
+                                                            >
+                                                                {file.name}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {formatBytes(
+                                                                    file.size,
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Remove Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removeFile(index)
+                                                        }
+                                                        className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-red-500 dark:hover:bg-gray-800 dark:hover:text-red-400"
+                                                        title="Remove file"
+                                                    >
                                                         <svg
-                                                            className="h-5 w-5"
+                                                            className="h-4 w-4"
                                                             fill="none"
                                                             viewBox="0 0 24 24"
                                                             stroke="currentColor"
@@ -203,51 +274,13 @@ export default function Index({
                                                                 strokeLinecap="round"
                                                                 strokeLinejoin="round"
                                                                 strokeWidth={2}
-                                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                                d="M6 18L18 6M6 6l12 12"
                                                             />
                                                         </svg>
-                                                    </div>
-
-                                                    <div className="min-w-0">
-                                                        <p
-                                                            className="truncate text-sm font-medium text-gray-800 dark:text-gray-200"
-                                                            title={file.name}
-                                                        >
-                                                            {file.name}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {formatBytes(
-                                                                file.size,
-                                                            )}
-                                                        </p>
-                                                    </div>
+                                                    </button>
                                                 </div>
-
-                                                {/* Remove Button */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        removeFile(index)
-                                                    }
-                                                    className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-red-500 dark:hover:bg-gray-800 dark:hover:text-red-400"
-                                                    title="Remove file"
-                                                >
-                                                    <svg
-                                                        className="h-4 w-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M6 18L18 6M6 6l12 12"
-                                                        />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -282,57 +315,99 @@ export default function Index({
                                 </p>
                             ) : (
                                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                                    {uploadedFiles.map((file) => (
-                                        <div
-                                            key={`upload-${file.id}`}
-                                            className="flex flex-col justify-between rounded-lg border border-gray-200 bg-gray-50 p-4 transition-all hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:bg-gray-900"
-                                        >
-                                            <div className="flex items-start space-x-3">
-                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                                    <svg
-                                                        className="h-5 w-5"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                                        />
-                                                    </svg>
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p
-                                                        className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
-                                                        title={file.file_name}
-                                                    >
-                                                        {file.file_name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {formatBytes(
-                                                            file.file_size,
-                                                        )}
-                                                        {file.mime_type
-                                                            ? ` • ${file.mime_type}`
-                                                            : ''}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                    {uploadedFiles.map((file) => {
+                                        const isImage =
+                                            file.mime_type?.startsWith(
+                                                'image/',
+                                            );
+                                        const isPdf =
+                                            file.mime_type ===
+                                            'application/pdf';
 
-                                            <div className="mt-3 flex justify-end">
-                                                <DangerButton
-                                                    className="!px-2.5 !py-1 text-xs"
-                                                    onClick={() =>
-                                                        deleteUpload(file.id)
-                                                    }
-                                                >
-                                                    Delete
-                                                </DangerButton>
+                                        return (
+                                            <div
+                                                key={`upload-${file.id}`}
+                                                className="flex flex-col justify-between rounded-lg border border-gray-200 bg-gray-50 p-4 transition-all hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:bg-gray-900"
+                                            >
+                                                <div className="flex items-start space-x-3">
+                                                    {/* Thumbnail / Icon */}
+                                                    {isImage &&
+                                                    file.file_url ? (
+                                                        <img
+                                                            src={file.file_url}
+                                                            alt={file.file_name}
+                                                            className="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-700"
+                                                            onError={(e) => {
+                                                                // Fallback if image fails to load
+                                                                (
+                                                                    e.target as HTMLElement
+                                                                ).style.display =
+                                                                    'none';
+                                                            }}
+                                                        />
+                                                    ) : isPdf ? (
+                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-xs font-bold text-red-600 dark:bg-red-950/60 dark:text-red-400">
+                                                            PDF
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                                            <svg
+                                                                className="h-5 w-5"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth={
+                                                                        2
+                                                                    }
+                                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <p
+                                                            className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
+                                                            title={
+                                                                file.file_name
+                                                            }
+                                                        >
+                                                            {file.file_name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {formatBytes(
+                                                                file.file_size,
+                                                            )}
+                                                            {file.mime_type
+                                                                ? ` • ${file.mime_type}`
+                                                                : ''}
+                                                        </p>
+                                                        <p className="w-fit rounded-sm bg-gray-400 px-1 py-0.5 text-xs italic tracking-tighter text-gray-900">
+                                                            {file.status}
+                                                        </p>
+                                                    </div>
+
+                                                </div>
+
+                                                <div className="mt-3 flex justify-end">
+                                                    <DangerButton
+                                                        className="!px-2.5 !py-1 text-xs"
+                                                        onClick={() =>
+                                                            deleteUpload(
+                                                                file.id,
+                                                            )
+                                                        }
+                                                    >
+                                                        Delete
+                                                    </DangerButton>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

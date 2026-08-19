@@ -18,7 +18,13 @@ class UploadController extends Controller
         $user = $request->user();
         $data = Uploads::where('uploader_id', $user->id)
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($file) {
+                return [
+                    ...$file->getAttributes(),
+                    'file_url' => Storage::disk('s3')->url($file->file_url),
+                ];
+            });
         return Inertia::render('Uploads/Index', [
             'uploadedFiles' => $data,
         ]);
@@ -32,7 +38,7 @@ class UploadController extends Controller
         if($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
                 $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('uploads', $filename, 'public');
+                $path = $file->storeAs('uploads', $filename, 's3');
                 Uploads::create([
                     'file_size' => $file->getSize(),
                     'mime_type' => $file->getMimeType(),
@@ -51,7 +57,7 @@ class UploadController extends Controller
         }
 
         // Delete from the 'public' disk where it was stored
-        Storage::disk('public')->delete($upload->file_url);
+        Storage::disk('s3')->delete($upload->file_url);
 
         $upload->delete();
 
