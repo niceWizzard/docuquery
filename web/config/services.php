@@ -13,7 +13,14 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-
+    'bucket' => [
+        'base_url' => env('BUCKET_ENDPOINT')
+    ],
+    'api' => [
+        'ocr_url' => env('OCR_API_ENDPOINT'),
+        'embedding_url' => env('CREATE_EMBEDDING_URL'),
+        'embedding_model' => env('CREATE_EMBEDDING_MODEL'),
+    ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
