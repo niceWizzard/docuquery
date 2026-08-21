@@ -20,16 +20,14 @@ class QueryController extends Controller
             'query' => ['required', 'string', 'min:3', 'max:1024'],
         ]);
         $embeddingResult = $embeddingService->generate($request->input('query'));
-        $relevant = UploadChunk::query()
+        $relevant = UploadChunk::with('upload')
             ->nearestNeighbors('embedding', $embeddingResult, Distance::Cosine)
             ->take(5)
             ->get();
-        Log::info("QUERIED CHUNKS~");
-        Log::debug($relevant->map(function ($item) {
-            return $item->upload->file_name;
-        }));
-        return  back()->with('result', [
-            'queryResult' => $embeddingResult,
+    return back()->with('result', [
+            'queryResult' => $relevant->map(function ($item) {
+                return $item->upload->file_name;
+            }),
         ]);
     }
 
