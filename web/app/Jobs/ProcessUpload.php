@@ -5,12 +5,13 @@ namespace App\Jobs;
 use App\Enums\UploadStatus;
 use App\Models\UploadChunk;
 use App\Models\Uploads;
+use App\Services\EmbeddingService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Pgvector\Vector;
+use Pgvector\Laravel\Vector;
 
 class ProcessUpload implements ShouldQueue
 {
@@ -29,14 +30,15 @@ class ProcessUpload implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(EmbeddingService $embeddingService): void
     {
         try {
             $this->upload['status'] = UploadStatus::PROCESSING->value;
             $this->upload->save();
             $fileUrl = config('services.bucket.base_url') . '/' . $this->upload['file_url'];
             $apiUrl = config('services.api.ocr_url') . '/ocr/predict';
-            $response = Http::post(
+            Log::info("REQUESTING OCR!");
+            $response = Http::timeout(120)->post(
                 $apiUrl,
                 [
                     'image_url' => $fileUrl,
@@ -46,16 +48,13 @@ class ProcessUpload implements ShouldQueue
                 throw new \Exception("Unable to process upload.");
             }
             $processedTexts = is_array($response->json('text')) ? $response->json('text') : [];
-            $embeddingUrl = config('services.api.embedding_url');
             $page = 1;
-            DB::transaction(function () use ($processedTexts, $embeddingUrl, $page) {
+            DB::transaction(function () use ($processedTexts, $embeddingService, &$page) {
                 foreach ($processedTexts as $text) {
-
-                    $embeddingResult = Http::post($embeddingUrl, [
-                        'input' => $text,
-                        'model' => config('services.api.embedding_model'),
-                        'dimensions' => 1024,
-                    ])->json('embeddings')[0];
+                    if(empty($text)) {
+                        continue;
+                    }
+                    $embeddingResult = $embeddingService->generate($text);
                     UploadChunk::create([
                         'upload_id' => $this->upload->id,
                         'text' => $text,
