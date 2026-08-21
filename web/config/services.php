@@ -20,6 +20,9 @@ return [
         'ocr_url' => env('OCR_API_ENDPOINT'),
         'embedding_url' => env('CREATE_EMBEDDING_URL'),
         'embedding_model' => env('CREATE_EMBEDDING_MODEL'),
+        'llm_key'=>env("LLM_API_KEY"),
+        'llm_model'=> env("LLM_MODEL"),
+        'llm_url' => env("LLM_URL"),
     ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),

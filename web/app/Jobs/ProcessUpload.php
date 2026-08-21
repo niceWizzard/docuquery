@@ -50,17 +50,21 @@ class ProcessUpload implements ShouldQueue
             $processedTexts = is_array($response->json('text')) ? $response->json('text') : [];
             $page = 1;
             DB::transaction(function () use ($processedTexts, $embeddingService, &$page) {
-                foreach ($processedTexts as $text) {
-                    if(empty($text)) {
+                foreach ($processedTexts as $pageText) {
+                    if (empty(trim($pageText))) {
+                        $page++;
                         continue;
                     }
-                    $embeddingResult = $embeddingService->generate($text);
-                    UploadChunk::create([
-                        'upload_id' => $this->upload->id,
-                        'text' => $text,
-                        'page' => $page,
-                        'embedding' => new Vector($embeddingResult),
-                    ]);
+                    $chunks = $embeddingService->chunkText($pageText, 500, 100);
+                    foreach ($chunks as $chunk) {
+                        $embeddingResult = $embeddingService->generate($chunk);
+                        UploadChunk::create([
+                            'upload_id' => $this->upload->id,
+                            'text' => $chunk,
+                            'page' => $page,
+                            'embedding' => new Vector($embeddingResult),
+                        ]);
+                    }
                     $page++;
                 }
             });
