@@ -34,8 +34,26 @@ services:
         restart: unless-stopped
         ports:
             - "5000:5000"
-
+    embedding_api:
+        image: ollama/ollama:latest
+        container_name: embedding_api
+        ports:
+            - "8080:11434"
+        volumes:
+            - ollama_cache:/root/.ollama
+        restart: unless-stopped
+        entrypoint:
+            - /bin/sh
+            - -c
+            - |
+                ollama serve &
+                until ollama list > /dev/null 2>&1; do
+                  sleep 1
+                done
+                ollama pull qwen3-embedding:4b
+                wait
 
 volumes:
     miniodata:
     pgdata:
+    ollama_cache:
