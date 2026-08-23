@@ -23,7 +23,7 @@ class UploadController extends Controller
             ->map(function ($file) {
                 return [
                     ...$file->getAttributes(),
-                    'file_url' => Storage::disk('s3')->url($file->file_url),
+                    'file_url' => Storage::disk('s3')->temporaryUrl($file->file_url, now()->addMinutes(5)),
                 ];
             });
         return Inertia::render('Uploads/Index', [
