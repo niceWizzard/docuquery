@@ -69,7 +69,7 @@ export default function Index({
                         onFilesChange={(files) => setData('files', files)}
                         onSubmit={handleUploadSubmit}
                         isUploading={processing}
-                        error={errors.files}
+                        errors={errors}
                         acceptedFormats=".png,.jpg,.jpeg,.pdf"
                         acceptedExtensionsText="PNG, JPG, PDF up to 10MB"
                         maxSizeMB={10}

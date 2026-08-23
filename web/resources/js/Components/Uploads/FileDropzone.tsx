@@ -8,6 +8,7 @@ interface FileDropzoneProps {
     onSubmit: () => void;
     isUploading?: boolean;
     error?: string;
+    errors?: Record<string, string>;
     acceptedFormats?: string;
     acceptedExtensionsText?: string;
     maxSizeMB?: number;
@@ -19,12 +20,26 @@ export default function FileDropzone({
     onSubmit,
     isUploading = false,
     error,
+    errors,
     acceptedFormats = '.png,.jpg,.jpeg,.pdf',
     acceptedExtensionsText = 'PNG, JPG, PDF up to 10MB',
     maxSizeMB = 10,
 }: FileDropzoneProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [previewUrls, setPreviewUrls] = useState<{ [key: string]: string }>({});
+
+    // Collect all error messages from `error` prop and `errors` object (e.g. `files`, `files.0`, etc.)
+    const errorMessages: string[] = [];
+    if (error) {
+        errorMessages.push(error);
+    }
+    if (errors) {
+        Object.entries(errors).forEach(([key, msg]) => {
+            if ((key === 'files' || key.startsWith('files.')) && msg && !errorMessages.includes(msg)) {
+                errorMessages.push(msg);
+            }
+        });
+    }
 
     useEffect(() => {
         const urls: { [key: string]: string } = {};
@@ -139,11 +154,15 @@ export default function FileDropzone({
                     </div>
                 </div>
 
-                {/* Validation Error Message */}
-                {error && (
-                    <p className="text-xs font-medium text-red-600 dark:text-red-400">
-                        {error}
-                    </p>
+                {/* Validation Error Messages */}
+                {errorMessages.length > 0 && (
+                    <div className="space-y-1">
+                        {errorMessages.map((msg, index) => (
+                            <p key={index} className="text-xs font-medium text-red-600 dark:text-red-400">
+                                {msg}
+                            </p>
+                        ))}
+                    </div>
                 )}
 
                 {/* Selected Files Staging List */}
