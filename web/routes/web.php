@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\OcrWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QueryController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+Route::post('/api/webhooks/ocr', [OcrWebhookController::class, 'handle'])->name('webhooks.ocr');
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [

@@ -32,6 +32,8 @@ services:
             dockerfile: Dockerfile
         container_name: ocr_api
         restart: unless-stopped
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         ports:
             - "5000:5000"
     embedding_api:

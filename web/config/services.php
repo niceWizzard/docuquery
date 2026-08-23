@@ -23,6 +23,8 @@ return [
         'llm_key'=>env("LLM_API_KEY"),
         'llm_model'=> env("LLM_MODEL"),
         'llm_url' => env("LLM_URL"),
+        'webhook_url' => env("OCR_WEBHOOK_URL", env("OCR_WEBHOOK_URL", "http://localhost:8000") . "/api/webhooks/ocr"),
+        'webhook_secret' => env("OCR_WEBHOOK_SECRET"),
     ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),

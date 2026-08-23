@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, Request, HTTPException, status
+import logging
+from fastapi import FastAPI, Depends, Request, HTTPException, status, BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, HttpUrl
 from paddlex import create_pipeline
@@ -8,9 +9,18 @@ import cv2
 import numpy as np
 import pypdfium2 as pdfium
 
+logging.basicConfig(level=logging.INFO)
+
 
 class OCRRequest(BaseModel):
     image_url: HttpUrl
+
+
+class AsyncOCRRequest(BaseModel):
+    upload_id: int
+    image_url: HttpUrl
+    callback_url: HttpUrl
+    secret_token: str | None = None
 
 
 class PaddleXOCRService:
@@ -121,7 +131,64 @@ async def run_ocr(
         )
 
 
+async def process_ocr_task(
+    payload: AsyncOCRRequest,
+    ocr: PaddleXOCRService,
+    client: httpx.AsyncClient,
+):
+    callback_headers = {}
+    if payload.secret_token:
+        callback_headers["X-Webhook-Secret"] = payload.secret_token
+
+    try:
+        logging.info(f"Starting async OCR processing for upload ID {payload.upload_id}")
+        res = await client.get(str(payload.image_url))
+        res.raise_for_status()
+        file_bytes = res.content
+
+        extracted_texts = await run_in_threadpool(ocr.predict_from_bytes, file_bytes)
+
+        callback_payload = {
+            "upload_id": payload.upload_id,
+            "status": "completed",
+            "text": extracted_texts,
+            "error": None,
+        }
+        logging.info(f"OCR successful for upload ID {payload.upload_id}, posting callback to {payload.callback_url}")
+        cb_res = await client.post(str(payload.callback_url), json=callback_payload, headers=callback_headers)
+        cb_res.raise_for_status()
+
+    except Exception as e:
+        error_msg = str(e)
+        logging.error(f"OCR processing failed for upload ID {payload.upload_id}: {error_msg}")
+        callback_payload = {
+            "upload_id": payload.upload_id,
+            "status": "failed",
+            "text": [],
+            "error": error_msg,
+        }
+        try:
+            await client.post(str(payload.callback_url), json=callback_payload, headers=callback_headers)
+        except Exception as cb_err:
+            logging.error(f"Failed to post error callback for upload ID {payload.upload_id}: {str(cb_err)}")
+
+
+@app.post("/ocr/process", status_code=status.HTTP_202_ACCEPTED)
+async def process_ocr(
+    payload: AsyncOCRRequest,
+    background_tasks: BackgroundTasks,
+    ocr: PaddleXOCRService = Depends(get_ocr_service),
+    client: httpx.AsyncClient = Depends(get_http_client),
+):
+    background_tasks.add_task(process_ocr_task, payload, ocr, client)
+    return {
+        "status": "queued",
+        "upload_id": payload.upload_id,
+        "message": "OCR process has been queued successfully.",
+    }
+
 
 if __name__ == "__main__":
+
     # host="0.0.0.0" is required inside Docker
-    app.run(host="0.0.0.0", port=5000)
+    app.run(port=5000)
