@@ -34,7 +34,7 @@ class UploadController extends Controller
     public function store(Request $request) {
         $request->validate([
             'files' => ['required', 'array', 'min:1'],
-            'files.*' => ['required', 'file','mimes:png,jpg,pdf']
+            'files.*' => ['required', 'file','mimes:png,jpg,pdf','max:10240']
         ]);
         if($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {

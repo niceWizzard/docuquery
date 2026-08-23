@@ -28,6 +28,10 @@ export default function FileDropzone({
     const [isDragging, setIsDragging] = useState(false);
     const [previewUrls, setPreviewUrls] = useState<{ [key: string]: string }>({});
 
+    const hasOverSizeFile = files.some(
+        (file) => file.size > maxSizeMB * 1024 * 1024,
+    );
+
     // Collect all error messages from `error` prop and `errors` object (e.g. `files`, `files.0`, etc.)
     const errorMessages: string[] = [];
     if (error) {
@@ -39,6 +43,12 @@ export default function FileDropzone({
                 errorMessages.push(msg);
             }
         });
+    }
+    if (hasOverSizeFile) {
+        const msg = `One or more files exceed the maximum allowed size of ${maxSizeMB}MB.`;
+        if (!errorMessages.includes(msg)) {
+            errorMessages.push(msg);
+        }
     }
 
     useEffect(() => {
@@ -98,7 +108,7 @@ export default function FileDropzone({
             <form
                 onSubmit={(e) => {
                     e.preventDefault();
-                    if (files.length > 0 && !isUploading) {
+                    if (files.length > 0 && !isUploading && !hasOverSizeFile) {
                         onSubmit();
                     }
                 }}
@@ -284,7 +294,7 @@ export default function FileDropzone({
                 <div className="flex items-center justify-end pt-2">
                     <PrimaryButton
                         type="submit"
-                        disabled={isUploading || files.length === 0}
+                        disabled={isUploading || files.length === 0 || hasOverSizeFile}
                     >
                         {isUploading ? 'Uploading...' : 'Upload'}
                     </PrimaryButton>
