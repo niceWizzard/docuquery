@@ -30,6 +30,7 @@ export type PageProps<
     auth: {
         user: User;
     };
+    [key: string]: unknown;
 };
 
 

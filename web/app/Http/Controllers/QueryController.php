@@ -8,6 +8,7 @@ use App\Services\EmbeddingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Pgvector\Laravel\Distance;
 
@@ -61,10 +62,16 @@ class QueryController extends Controller
         $rawContent = $response['choices'][0]['message']['content'] ?? null;
         $parsedData = json_decode($rawContent, true);
         $fileId = $parsedData['fileId'] ?? ($relevant->first()->upload_id ?? null);
+        $upload = Uploads::find($fileId);
+        if ($upload != null) {
+            $fileData = [
+                ...$upload->getAttributes(),
+                'file_url' => Storage::disk('s3')->temporaryUrl($upload->file_url, now()->addMinutes(10)),
+            ];
+        }
         $result = [
             'message' => $parsedData['message'] ?? 'No answer generated.',
-            'fileId' => $fileId,
-            'file' => Uploads::find($fileId),
+            'file' => $fileData,
         ];
 
         return back()->with('result', [
