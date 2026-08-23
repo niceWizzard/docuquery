@@ -2,7 +2,7 @@ import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ChangeEvent, DragEvent, FormEventHandler, useState } from 'react';
 
 interface Upload {
@@ -390,10 +390,16 @@ export default function Index({
                                                             {file.status}
                                                         </p>
                                                     </div>
-
                                                 </div>
 
-                                                <div className="mt-3 flex justify-end">
+                                                <div className="mt-3 flex justify-end gap-2">
+                                                    <Link
+                                                        href={file.file_url}
+                                                        target="_blank"
+                                                        className="inline-flex items-center rounded-md border border-transparent bg-gray-600 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 active:bg-gray-700 dark:focus:ring-offset-gray-800"
+                                                    >
+                                                        View
+                                                    </Link>
                                                     <DangerButton
                                                         className="!px-2.5 !py-1 text-xs"
                                                         onClick={() =>
