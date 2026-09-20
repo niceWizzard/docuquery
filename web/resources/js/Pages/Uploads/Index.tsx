@@ -2,7 +2,7 @@ import FileDropzone from '@/Components/Uploads/FileDropzone';
 import UploadedFileList from '@/Components/Uploads/UploadedFileList';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, Upload } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePoll } from '@inertiajs/react';
 import { useState } from 'react';
 
 interface UploadsIndexProps {
@@ -14,6 +14,9 @@ export default function Index({
     data,
     uploadedFiles = data ?? [],
 }: PageProps<UploadsIndexProps>) {
+    usePoll(5000, {
+        only: ['uploadedFiles'],
+    });
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const {
