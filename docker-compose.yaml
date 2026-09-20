@@ -1,3 +1,13 @@
+x-shared-env: &shared-environment
+    environment:
+        DB_CONNECTION: pgsql
+        DB_HOST: postgres
+        DB_PORT: 5432
+        OCR_WEBHOOK_URL: http://web/api/webhooks/ocr
+        OCR_API_ENDPOINT: http://ocr_api:5000
+        CREATE_EMBEDDING_URL: http://embedding_api:11434/api/embed
+        AWS_ENDPOINT: http://minio:9000/uploads
+
 services:
     web:
         build:
@@ -5,14 +15,8 @@ services:
             dockerfile: Dockerfile
         ports:
             - "80:80"
-        environment:
-            DB_CONNECTION: pgsql
-            DB_HOST: postgres
-            DB_PORT: 5432
-            OCR_WEBHOOK_URL: http://web/api/webhooks/ocr
-            OCR_API_ENDPOINT: http://ocr_api:5000
-            CREATE_EMBEDDING_URL: http://embedding_api:11434/api/embed
-            AWS_ENDPOINT: http://minio:9000/uploads
+        <<: *shared-environment
+
         depends_on:
             -   postgres
     worker:
@@ -20,14 +24,7 @@ services:
             context: ./web
             dockerfile: Dockerfile
         restart: unless-stopped
-        environment:
-            DB_CONNECTION: pgsql
-            DB_HOST: postgres
-            DB_PORT: 5432
-            OCR_WEBHOOK_URL: http://web/api/webhooks/ocr
-            OCR_API_ENDPOINT: http://ocr_api:5000
-            CREATE_EMBEDDING_URL: http://embedding_api:11434/api/embed
-            AWS_ENDPOINT: http://minio:9000/uploads
+        <<: *shared-environment
         depends_on:
             - postgres
         command: php artisan queue:work
@@ -64,8 +61,6 @@ services:
             dockerfile: Dockerfile
         container_name: ocr_api
         restart: unless-stopped
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
         ports:
             - "5000:5000"
     embedding_api:
