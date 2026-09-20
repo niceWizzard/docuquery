@@ -36,8 +36,9 @@ Route::prefix('uploads')
     ->name('uploads.')
     ->middleware('auth')
     ->controller(UploadController::class)->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::post('/', 'store')->name('store');
+        Route::get('/', 'index')->name('index');
+        Route::get('/{upload}', 'show')->name('show');
+        Route::post('/', 'store')->name('store');
     Route::delete('/{upload}', 'destroy')->name('destroy');
 
 

@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class ProcessUpload implements ShouldQueue
@@ -31,7 +32,7 @@ class ProcessUpload implements ShouldQueue
                 'status' => UploadStatus::PROCESSING->value,
             ]);
 
-            $fileUrl = rtrim(config('services.bucket.base_url'), '/') . '/' . $this->upload->file_url;
+            $fileUrl = Storage::disk('s3')->url($this->upload->file_url);
             $apiUrl = rtrim(config('services.api.ocr_url'), '/') . '/ocr/process';
             $callbackUrl = config('services.api.webhook_url');
             $secretToken = config('services.api.webhook_secret');

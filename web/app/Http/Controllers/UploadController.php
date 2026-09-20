@@ -23,12 +23,21 @@ class UploadController extends Controller
             ->map(function ($file) {
                 return [
                     ...$file->getAttributes(),
-                    'file_url' => Storage::disk('s3')->temporaryUrl($file->file_url, now()->addMinutes(5)),
+                    'file_url' => route('uploads.show', $file->id),
                 ];
             });
         return Inertia::render('Uploads/Index', [
             'uploadedFiles' => $data,
         ]);
+    }
+
+    public function show(Request $request, Uploads $upload)
+    {
+        if ($request->user()->id !== $upload->uploader_id) {
+            abort(403, 'Unauthorized access to this file.');
+        }
+
+        return Storage::disk('s3')->response($upload->file_url);
     }
 
     public function store(Request $request) {

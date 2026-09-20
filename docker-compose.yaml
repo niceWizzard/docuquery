@@ -1,6 +1,38 @@
 services:
+    web:
+        build:
+            context: ./web
+            dockerfile: Dockerfile
+        ports:
+            - "80:80"
+        environment:
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            OCR_WEBHOOK_URL: http://web/api/webhooks/ocr
+            OCR_API_ENDPOINT: http://ocr_api:5000
+            CREATE_EMBEDDING_URL: http://embedding_api:11434/api/embed
+            AWS_ENDPOINT: http://minio:9000/uploads
+        depends_on:
+            -   postgres
+    worker:
+        build:
+            context: ./web
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        environment:
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            OCR_WEBHOOK_URL: http://web/api/webhooks/ocr
+            OCR_API_ENDPOINT: http://ocr_api:5000
+            CREATE_EMBEDDING_URL: http://embedding_api:11434/api/embed
+            AWS_ENDPOINT: http://minio:9000/uploads
+        depends_on:
+            - postgres
+        command: php artisan queue:work
     minio:
-        image: minio/minio:latest
+        image: quay.io/minio/minio:latest
         container_name: minio-s3
         restart: unless-stopped
         ports:
