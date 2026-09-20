@@ -32,7 +32,7 @@ class ProcessUpload implements ShouldQueue
                 'status' => UploadStatus::PROCESSING->value,
             ]);
 
-            $fileUrl = Storage::disk('s3')->url($this->upload->file_url);
+            $fileUrl = Storage::disk('s3')->temporaryUrl($this->upload->file_url, now()->addMinutes(30));
             $apiUrl = rtrim(config('services.api.ocr_url'), '/') . '/ocr/process';
             $callbackUrl = config('services.api.webhook_url');
             $secretToken = config('services.api.webhook_secret');

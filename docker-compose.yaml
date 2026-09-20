@@ -6,7 +6,7 @@ x-shared-env: &shared-environment
         OCR_WEBHOOK_URL: http://web/api/webhooks/ocr
         OCR_API_ENDPOINT: http://ocr_api:5000
         CREATE_EMBEDDING_URL: http://embedding_api:11434/api/embed
-        AWS_ENDPOINT: http://minio:9000/uploads
+        AWS_ENDPOINT: http://minio:9000/
 
 services:
     web:
@@ -44,6 +44,20 @@ services:
         command: server /data --console-address ":9001"
         volumes:
             - miniodata:/data
+
+    createbuckets:
+        image: quay.io/minio/mc:latest
+        depends_on:
+            - minio
+        entrypoint: >
+            /bin/sh -c "
+            until (/usr/bin/mc alias set myminio http://minio:9000 admin mysecretpassword); do
+              echo 'Waiting for MinIO server to come online...';
+              sleep 1;
+            done;
+            /usr/bin/mc mb --ignore-existing myminio/uploads;
+            exit 0;
+            "
 
     postgres:
         image: pgvector/pgvector:pg17
