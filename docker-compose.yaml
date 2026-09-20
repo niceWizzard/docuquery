@@ -33,7 +33,7 @@ services:
 
     minio:
         image: quay.io/minio/minio:latest
-        container_name: minio-s3
+        container_name: docuquery-minio-s3
         restart: unless-stopped
         ports:
             - "9000:9000" # S3 API endpoint
@@ -61,7 +61,7 @@ services:
 
     postgres:
         image: pgvector/pgvector:pg17
-        container_name: postgres-vector
+        container_name: docuquery-postgres
         restart: unless-stopped
         environment:
             POSTGRES_USER: postgres
@@ -82,13 +82,13 @@ services:
         build:
             context: ./api
             dockerfile: Dockerfile
-        container_name: ocr_api
+        container_name: docuquery-ocr_api
         restart: unless-stopped
         ports:
             - "5000:5000"
     embedding_api:
         image: ollama/ollama:latest
-        container_name: embedding_api
+        container_name: docuquery-embedding_api
         ports:
             - "8080:11434"
         volumes:
