@@ -39,11 +39,19 @@ DocuQuery is a containerized Retrieval-Augmented Generation (RAG) web platform t
    ```bash
    git clone https://github.com/niceWizzard/docuquery.git
    cd docuquery
+2. Set the appropriate LLM environment variables in web/.env
+   ```bash
+   # Example
+   LLM_API_KEY=
+   LLM_MODEL="aion-labs/aion-3.0"
+   LLM_URL="https://api.aionlabs.ai/v1/chat/completions"
+   ```
 2. **Run docker**
     ```bash
    docker compose up -d
+   docker exec docuquery-embedding_api-1 ollama pull qwen3-embedding:4b # Or any embedding you use 
     ```
-3. Visit the website through http://127.0.0.1:8000/
+3. Visit the website through http://localhost
 
 
 ---
