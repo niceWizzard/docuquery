@@ -66,7 +66,7 @@ class QueryController extends Controller
         if ($upload != null) {
             $fileData = [
                 ...$upload->getAttributes(),
-                'file_url' => Storage::disk('s3')->temporaryUrl($upload->file_url, now()->addMinutes(10)),
+                'file_url' => route('uploads.show', ['upload' => $upload]),
             ];
         }
         $result = [
