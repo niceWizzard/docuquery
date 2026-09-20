@@ -16,9 +16,10 @@ services:
         ports:
             - "80:80"
         <<: *shared-environment
-
         depends_on:
-            -   postgres
+           postgres:
+               condition: service_healthy
+
     worker:
         build:
             context: ./web
@@ -26,8 +27,10 @@ services:
         restart: unless-stopped
         <<: *shared-environment
         depends_on:
-            - postgres
+            postgres:
+                condition: service_healthy
         command: php artisan queue:work
+
     minio:
         image: quay.io/minio/minio:latest
         container_name: minio-s3
@@ -54,6 +57,12 @@ services:
             - "5432:5432"
         volumes:
             - pgdata:/var/lib/postgresql/data
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U postgres -d vectordb" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
 
     ocr_api:
         build:
