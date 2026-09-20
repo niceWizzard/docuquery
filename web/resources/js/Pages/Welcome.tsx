@@ -131,7 +131,7 @@ export default function Welcome({
         {
             step: '02',
             name: 'Text is Extracted',
-            tech: 'FastAPI + PaddleOCR',
+            tech: 'FastAPI + TesseractOCR',
             desc: 'The content is read from the file — including scanned pages that have no selectable text.',
         },
         {
@@ -161,7 +161,7 @@ export default function Welcome({
             category: 'Application',
         },
         {
-            name: 'FastAPI + PaddleOCR',
+            name: 'FastAPI + TesseractOCR',
             role: 'Reads text from PDFs and scanned images',
             category: 'Extraction',
         },
