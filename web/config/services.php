@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Env;
+
 return [
 
     /*
@@ -13,18 +15,15 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-    'bucket' => [
-        'base_url' => env('BUCKET_ENDPOINT')
-    ],
     'api' => [
-        'ocr_url' => env('OCR_API_ENDPOINT'),
-        'embedding_url' => env('CREATE_EMBEDDING_URL'),
-        'embedding_model' => env('CREATE_EMBEDDING_MODEL'),
-        'llm_key'=>env("LLM_API_KEY"),
-        'llm_model'=> env("LLM_MODEL"),
-        'llm_url' => env("LLM_URL"),
-        'webhook_url' => env("OCR_WEBHOOK_URL", env("OCR_WEBHOOK_URL", "http://localhost:8000") . "/api/webhooks/ocr"),
-        'webhook_secret' => env("OCR_WEBHOOK_SECRET"),
+        'ocr_url' => Env::getOrFail('OCR_API_ENDPOINT'),
+        'embedding_url' => Env::getOrFail('CREATE_EMBEDDING_URL'),
+        'embedding_model' => Env::getOrFail('CREATE_EMBEDDING_MODEL'),
+        'llm_key'=>Env::getOrFail("LLM_API_KEY"),
+        'llm_model'=> Env::getOrFail("LLM_MODEL"),
+        'llm_url' => Env::getOrFail("LLM_URL"),
+        'webhook_url' => Env::getOrFail("OCR_WEBHOOK_URL"),
+        'webhook_secret' => Env::get("OCR_WEBHOOK_SECRET"),
     ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
