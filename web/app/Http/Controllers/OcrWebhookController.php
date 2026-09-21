@@ -36,6 +36,10 @@ class OcrWebhookController extends Controller
             return response()->json(['message' => "Upload ID {$validated['upload_id']} not found"], 404);
         }
 
+        $upload->update([
+            'status' => UploadStatus::PROCESSING,
+        ]);
+
         if ($validated['status'] === 'completed') {
             UploadChunk::where('upload_id', $upload->id)->delete();
 

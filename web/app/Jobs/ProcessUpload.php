@@ -29,7 +29,7 @@ class ProcessUpload implements ShouldQueue
     {
         try {
             $this->upload->update([
-                'status' => UploadStatus::PROCESSING->value,
+                'status' => UploadStatus::EXTRACTING->value,
             ]);
 
             $fileUrl = Storage::disk('s3')->temporaryUrl($this->upload->file_url, now()->addMinutes(30));
