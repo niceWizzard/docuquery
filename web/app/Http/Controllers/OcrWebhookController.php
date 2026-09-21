@@ -3,19 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UploadStatus;
+use App\Jobs\EmbedUploadPage;
 use App\Models\UploadChunk;
 use App\Models\Uploads;
-use App\Services\EmbeddingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Pgvector\Laravel\Vector;
+use Illuminate\Support\Str;
 use Throwable;
 
 class OcrWebhookController extends Controller
 {
-    public function handle(Request $request, EmbeddingService $embeddingService): JsonResponse
+    public function handle(Request $request): JsonResponse
     {
         $secret = config('services.api.webhook_secret');
         if ($secret && $request->header('X-Webhook-Secret') !== $secret) {
@@ -36,55 +37,43 @@ class OcrWebhookController extends Controller
         }
 
         if ($validated['status'] === 'completed') {
-            try {
-                $processedTexts = $validated['text'] ?? [];
-                $page = 1;
+            UploadChunk::where('upload_id', $upload->id)->delete();
 
-                DB::transaction(function () use ($upload, $processedTexts, $embeddingService, &$page) {
-                    UploadChunk::where('upload_id', $upload->id)->delete();
+            $batchId = (string) Str::uuid();
+            Log::info("Starting embedding process of upload {$upload->id} batch id {$batchId}.");
+            $jobs = collect($validated['text'] ?? [])
+                ->filter(fn($text) => !empty(trim($text)))
+                ->values()
+                ->map(fn($text, $index) => new EmbedUploadPage($upload, $index + 1, $text, $batchId))
+                ->all();
 
-                    foreach ($processedTexts as $pageText) {
-                        if (empty(trim($pageText))) {
-                            $page++;
-                            continue;
-                        }
-
-                        $chunks = $embeddingService->chunkText($pageText, 500, 100);
-
-                        foreach ($chunks as $chunk) {
-                            $embeddingResult = $embeddingService->generate($chunk);
-                            UploadChunk::create([
-                                'upload_id' => $upload->id,
-                                'text' => $chunk,
-                                'page' => $page,
-                                'embedding' => new Vector($embeddingResult),
-                            ]);
-                        }
-
-                        $page++;
-                    }
-                });
-
-                $upload->update([
-                    'status' => UploadStatus::COMPLETED->value,
-                ]);
-
-                Log::info("OCR webhook completed successfully for upload ID {$upload->id}");
-                return response()->json(['message' => 'Webhook processed successfully']);
-            } catch (Throwable $e) {
-                Log::error("Failed to process OCR completion webhook for upload ID {$upload->id}: {$e->getMessage()}");
-                $upload->update([
-                    'status' => UploadStatus::FAILED->value,
-                ]);
-                return response()->json(['message' => 'Failed to process OCR text embeddings', 'error' => $e->getMessage()], 500);
-            }
+            Bus::batch($jobs)
+                ->name("embed-upload-{$upload->id}")
+                ->then(function () use ($upload, $batchId) {
+                    DB::transaction(function () use ($upload, $batchId) {
+                        UploadChunk::where('upload_id', $upload->id)
+                            ->where('batch_id', '!=', $batchId)
+                            ->delete();
+                        $upload->update(['status' => UploadStatus::COMPLETED->value]);
+                        Log::info("Finished embedding batch id {$batchId} for upload {$upload->id}.");
+                    });
+                })
+                ->catch(function ($batch, Throwable $e) use ($upload, $batchId) {
+                    UploadChunk::where('upload_id', $upload->id)
+                        ->where('batch_id', $batchId)
+                        ->delete();
+                    $upload->update(['status' => UploadStatus::FAILED->value]);
+                    Log::error("Embedding batch {$batchId} process failed for upload: {$upload->id} - {$e->getMessage()} ");
+                })
+                ->dispatch();
+        } else {
+            Log::error("OCR processing reported failure for upload ID {$upload->id}: " . ($validated['error'] ?? 'Unknown error'));
+            $upload->update([
+                'status' => UploadStatus::FAILED->value,
+            ]);
         }
 
-        // Status is 'failed'
-        Log::error("OCR processing reported failure for upload ID {$upload->id}: " . ($validated['error'] ?? 'Unknown error'));
-        $upload->update([
-            'status' => UploadStatus::FAILED->value,
-        ]);
+
 
         return response()->json(['message' => 'Webhook received error notification']);
     }
