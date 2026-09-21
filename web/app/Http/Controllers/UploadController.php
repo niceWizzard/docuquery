@@ -11,9 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
-use function Laravel\Prompts\error;
-use function Pest\Laravel\json;
 
 class UploadController extends Controller
 {
@@ -40,7 +39,31 @@ class UploadController extends Controller
             abort(403, 'Unauthorized access to this file.');
         }
 
-        return Storage::disk('s3')->response($upload->file_url);
+        try {
+            if (!Storage::disk('s3')->exists($upload->file_url)) {
+                abort(404, 'File not found on storage server.');
+            }
+
+            return Storage::disk('s3')->response(
+                $upload->file_url,
+                $upload->file_name,
+                [
+                    'Content-Type'        => $upload->mime_type,
+                    'Content-Disposition' => 'inline; filename="' . addslashes($upload->file_name) . '"',
+                ]
+            );
+        } catch (HttpExceptionInterface $e) {
+            // Re-throw 404/403 so Laravel's native error pages handle them
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error("Failed to stream S3 file [ID: {$upload->id}]: " . $e->getMessage());
+
+            // Standard Laravel 500 error page or custom view
+            return Inertia::render('Error', [
+                'status' => 500,
+                'message' => 'Unable to retrieve the file from storage. It may have been moved or temporary network issues occurred.',
+            ], 500);
+        }
     }
 
     public function store(Request $request)
