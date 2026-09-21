@@ -2,18 +2,16 @@ import FileDropzone from '@/Components/Uploads/FileDropzone';
 import UploadedFileList from '@/Components/Uploads/UploadedFileList';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, Upload } from '@/types';
-import { Head, router, useForm, usePoll } from '@inertiajs/react';
+import { Head, router, useForm, usePage, usePoll } from '@inertiajs/react';
 import { useState } from 'react';
 
-interface UploadsIndexProps {
+interface UploadsIndexProps extends PageProps {
     data?: Upload[];
     uploadedFiles?: Upload[];
 }
 
-export default function Index({
-    data,
-    uploadedFiles = data ?? [],
-}: PageProps<UploadsIndexProps>) {
+export default function Index() {
+    const { props } = usePage<UploadsIndexProps>();
     usePoll(5000, {
         only: ['uploadedFiles'],
     });
@@ -77,10 +75,9 @@ export default function Index({
                         acceptedExtensionsText="PNG, JPG, PDF up to 10MB"
                         maxSizeMB={10}
                     />
-
                     {/* Uploaded Files */}
                     <UploadedFileList
-                        files={uploadedFiles}
+                        files={props.uploadedFiles ?? []}
                         onDelete={handleDeleteUpload}
                         deletingId={deletingId}
                         title="Your Uploads"
