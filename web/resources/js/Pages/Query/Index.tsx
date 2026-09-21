@@ -134,7 +134,7 @@ export default function Index({ result }: PageProps<QueryPageProps>) {
                                     {data.query && !processing && (
                                         <button
                                             type="button"
-                                            onClick={() => reset('query')}
+                                            onClick={() => setData('query', '')}
                                             aria-label="Clear search"
                                             className="absolute inset-y-0 right-2 flex items-center p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none sm:right-28 dark:hover:text-gray-200"
                                         >
