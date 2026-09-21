@@ -24,7 +24,7 @@ class UploadController extends Controller
             ->get()
             ->map(function ($file) {
                 return [
-                    ...$file->getAttributes(),
+                    ...$file->toArray(),
                     'file_url' => route('uploads.show', $file->id),
                 ];
             });

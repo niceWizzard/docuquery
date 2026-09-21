@@ -10,7 +10,12 @@ export function formatBytes(bytes?: number, decimals = 2): string {
 export function formatDate(dateString?: string): string {
     if (!dateString) return '';
     try {
-        const date = new Date(dateString);
+        let str = dateString.trim();
+        // If the date string lacks a timezone offset or 'Z', treat it as UTC
+        if (!str.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(str)) {
+            str = str.replace(' ', 'T') + 'Z';
+        }
+        const date = new Date(str);
         return new Intl.DateTimeFormat('en-US', {
             month: 'short',
             day: 'numeric',

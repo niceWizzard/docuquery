@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UploadStatus;
 use App\Models\UploadChunk;
 use App\Models\Uploads;
 use App\Services\EmbeddingService;
@@ -24,7 +25,9 @@ class QueryController extends Controller
             'query' => ['required', 'string', 'min:3', 'max:1024'],
         ]);
         $embeddingResult = $embeddingService->generate($request->input('query'));
-        $relevant = UploadChunk::with('upload')
+        $relevant = UploadChunk::
+            whereHas('upload', fn($query) => $query->where('status', UploadStatus::COMPLETED))
+            ->with('upload')
             ->nearestNeighbors('embedding', $embeddingResult, Distance::Cosine)
             ->take(5)
             ->get();
@@ -65,7 +68,7 @@ class QueryController extends Controller
         $upload = Uploads::find($fileId);
         if ($upload != null) {
             $fileData = [
-                ...$upload->getAttributes(),
+                ...$upload->toArray(),
                 'file_url' => route('uploads.show', ['upload' => $upload]),
             ];
         }
