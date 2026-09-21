@@ -7,6 +7,8 @@ x-shared-env: &shared-environment
         OCR_API_ENDPOINT: http://ocr_api:5000
         CREATE_EMBEDDING_URL: http://embedding_api:11434/api/embed
         AWS_ENDPOINT: http://minio:9000/
+        LOG_CHANNEL: stack
+        LOG_STACK: stderr
 
 services:
     web:
@@ -105,7 +107,18 @@ services:
                 ollama pull qwen3-embedding:4b
                 wait
 
+    dozzle:
+        image: amir20/dozzle:latest
+        container_name: dozzle
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - dozzle_data:/data
+        ports:
+            - "8888:8080"
+        restart: unless-stopped
+
 volumes:
     miniodata:
     pgdata:
     ollama_cache:
+    dozzle_data:

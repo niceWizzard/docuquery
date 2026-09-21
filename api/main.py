@@ -16,7 +16,11 @@ import uvicorn
 if "TESSDATA_PREFIX" not in os.environ:
     os.environ["TESSDATA_PREFIX"] = "/usr/share/tessdata/"
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 class UploadStatus(str, Enum):
@@ -135,12 +139,12 @@ async def process_ocr_task(
             "text": extracted_texts,
             "error": None,
         }
-        logging.info(f"OCR successful for upload ID {payload.upload_id}, notifying {payload.callback_url}")
         cb_res = await client.post(
             str(payload.callback_url),
             json=completed_payload,
             headers=callback_headers,
         )
+        logging.info(f"OCR finished for upload ID {payload.upload_id}")
         cb_res.raise_for_status()
 
     except Exception as e:

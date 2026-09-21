@@ -30,8 +30,6 @@ class EmbeddingService
      */
     public function generate(string $text): array
     {
-        Log::info("REQUESTING EMBEDDING!");
-
         $response = Http::timeout($this->timeout)->post($this->url, [
             'input' => $text,
             'model' => $this->model,
